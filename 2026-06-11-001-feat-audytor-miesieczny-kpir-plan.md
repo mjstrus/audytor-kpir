@@ -73,7 +73,7 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 
 ## Implementation Units
 
-- [ ] **Unit 1: Szkielet repo, modele i parser KPiR**
+- [x] **Unit 1: Szkielet repo, modele i parser KPiR** ✅ 2026-06-11
 
 **Cel:** Repo `audytor-kpir` z czystym pakietem silnika; parser XLSX zwracający listę wpisów KPiR + sumy kontrolne.
 
@@ -104,6 +104,8 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 - Plik z celowo zepsutą kwotą → `ParserError` o niezgodności sum.
 
 **Weryfikacja:** pytest zielony; parser zwraca komplet danych potrzebnych wszystkim 5 kontrolom bez ponownego czytania pliku.
+
+**Status wykonania (2026-06-11):** 12/12 testów pytest zielonych na realnej próbce SMAKOSZ. Potwierdzone: 136 wpisów, suma przychodu 172 476,44, proporcje paliwa {20, 75}, LPU/LPE za 2026/03, DRA za 2026/02, korekta −42,84, 2 wpisy `!INCYDENTALNY`, zepsuta kwota → `ParserError`. Mapowanie kolumn kwotowych dynamiczne po etykietach `(09)`–`(18)` z wiersza 17 wydruku (odporne na przesunięcia kolumn). Środowisko: Python 3.12.10 (venv), openpyxl 3.1.5, pytest 8.3.5.
 
 - [ ] **Unit 2: Adapter JPK_FA → znormalizowana lista faktur**
 
