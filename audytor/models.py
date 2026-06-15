@@ -29,6 +29,16 @@ class WpisKPiR:
 
 
 @dataclass(frozen=True)
+class Faktura:
+    """Znormalizowana faktura, niezależna od źródła (JPK_FA, Saldeo, ...)."""
+
+    numer: str
+    data: date
+    nip_kontrahenta: str | None
+    kwota_brutto: Decimal
+
+
+@dataclass(frozen=True)
 class KsiegaMiesiac:
     """Sparsowana księga za jeden miesiąc wraz z sumami kontrolnymi z wydruku."""
 

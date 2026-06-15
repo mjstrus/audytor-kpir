@@ -107,7 +107,7 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 
 **Status wykonania (2026-06-11):** 12/12 testów pytest zielonych na realnej próbce SMAKOSZ. Potwierdzone: 136 wpisów, suma przychodu 172 476,44, proporcje paliwa {20, 75}, LPU/LPE za 2026/03, DRA za 2026/02, korekta −42,84, 2 wpisy `!INCYDENTALNY`, zepsuta kwota → `ParserError`. Mapowanie kolumn kwotowych dynamiczne po etykietach `(09)`–`(18)` z wiersza 17 wydruku (odporne na przesunięcia kolumn). Środowisko: Python 3.12.10 (venv), openpyxl 3.1.5, pytest 8.3.5.
 
-- [ ] **Unit 2: Adapter JPK_FA → znormalizowana lista faktur**
+- [x] **Unit 2: Adapter JPK_FA → znormalizowana lista faktur** ✅ 2026-06-15
 
 **Cel:** Wczytanie JPK_FA XML do listy `Faktura(numer, data, nip_kontrahenta, kwota_brutto)` niezależnej od źródła (R3).
 
@@ -128,6 +128,10 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 - Normalizacja: `"FV 1/26 "` i `"FV 1/26"` dają ten sam klucz.
 
 **Weryfikacja:** adapter zwraca dane wystarczające dla kontroli kompletności bez wiedzy o formacie źródła w silniku.
+
+**Status wykonania (2026-06-15):** 9/9 testów zielonych na realnym pliku JPK_FA(4) (ABACUS, marzec 2026, 3 faktury). Parser namespace-agnostic (`xml.etree.ElementTree` — bez nowej zależności `lxml`), mapowanie pól P_2A/P_1/P_5B/P_15, suma brutto uzgodniona z `FakturaCtrl/WartoscFaktur` (1335,83). `normalizuj_numer` w `sources/base.py` + protokół `ZrodloFaktur` pod przyszłe Saldeo. Błędy → `JpkFaError`.
+
+**⚠️ Uwaga do kalibracji (Unit 4):** dostarczony plik to JPK_FA **sprzedażowy biura ABACUS** (Podmiot1 = ABACUS, NIP 7162819366), a nie faktury kontrahenta SMAKOSZ. Do kalibracji klucza dopasowania faktur (R4) potrzebny JPK_FA **tego samego klienta i miesiąca co KPiR** (SMAKOSZ, kwiecień 2026). Obecny plik służy wyłącznie jako fixture poprawności adaptera.
 
 - [ ] **Unit 3: Karta charakterystyki — DocType we Frappe + klient odczytu**
 
