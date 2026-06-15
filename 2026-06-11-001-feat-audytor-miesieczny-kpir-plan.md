@@ -129,11 +129,13 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 
 **Weryfikacja:** adapter zwraca dane wystarczające dla kontroli kompletności bez wiedzy o formacie źródła w silniku.
 
-**Status wykonania (2026-06-15):** 9/9 testów zielonych na realnym pliku JPK_FA(4) (ABACUS, marzec 2026, 3 faktury). Parser namespace-agnostic (`xml.etree.ElementTree` — bez nowej zależności `lxml`), mapowanie pól P_2A/P_1/P_5B/P_15, suma brutto uzgodniona z `FakturaCtrl/WartoscFaktur` (1335,83). `normalizuj_numer` w `sources/base.py` + protokół `ZrodloFaktur` pod przyszłe Saldeo. Błędy → `JpkFaError`.
+**Status wykonania (2026-06-15):** 9/9 testów zielonych na realnym pliku JPK_FA(4) (ABACUS, marzec 2026, 3 faktury, **eksport z Saldeo**). Parser namespace-agnostic (`xml.etree.ElementTree` — bez nowej zależności `lxml`), mapowanie pól P_2A/P_1/P_5B/P_15, suma brutto uzgodniona z `FakturaCtrl/WartoscFaktur` (1335,83). `normalizuj_numer` w `sources/base.py` + protokół `ZrodloFaktur` pod przyszłe inne źródła. Błędy → `JpkFaError`.
 
-**⚠️ Uwaga do kalibracji (Unit 4):** dostarczony plik to JPK_FA **sprzedażowy biura ABACUS** (Podmiot1 = ABACUS, NIP 7162819366), a nie faktury kontrahenta SMAKOSZ. Do kalibracji klucza dopasowania faktur (R4) potrzebny JPK_FA **tego samego klienta i miesiąca co KPiR** (SMAKOSZ, kwiecień 2026). Obecny plik służy wyłącznie jako fixture poprawności adaptera.
+**Korekta założenia planu:** JPK_FA(4) to standardowy format MF — XML jest identyczny niezależnie od programu eksportującego (Enova/Saldeo). Rozróżnienie "adapter Enova" vs "adapter Saldeo" jest więc dla JPK_FA bezprzedmiotowe: jeden adapter `jpk_fa.py` obsługuje oba. Osobny adapter Saldeo byłby potrzebny dopiero dla **natywnego** eksportu Saldeo (nie-JPK), co pozostaje poza MVP.
 
-- [ ] **Unit 3: Karta charakterystyki — DocType we Frappe + klient odczytu**
+**⚠️ Uwaga do kalibracji (Unit 4):** dostarczony plik to JPK_FA **sprzedażowy biura ABACUS** (Podmiot1 = ABACUS, NIP 7162819366), a nie faktury kontrahenta SMAKOSZ. Do kalibracji klucza dopasowania faktur (R4) potrzebny JPK_FA **tego samego klienta i miesiąca co KPiR** (SMAKOSZ, kwiecień 2026). Obecny plik służy wyłącznie jako fixture poprawności adaptera. Źródłem KPiR pozostaje Enova (wydruk szeroki); źródłem faktur — JPK_FA (tu z Saldeo).
+
+- [x] **Unit 3: Karta charakterystyki — DocType we Frappe + klient odczytu** ✅ 2026-06-15
 
 **Cel:** Pola sterujące kontrolami dostępne przez API; w narzędziu obiekt `KartaKlienta`.
 
@@ -155,6 +157,10 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 - Karta istnieje → poprawne mapowanie pól; karta nie istnieje → `None`; HTTP 500/timeout → wyjątek domenowy `FrappeUnavailable`.
 
 **Weryfikacja:** `KartaKlienta` dostarcza komplet parametrów dla kontroli R5–R7 dla NIP-u z pliku KPiR.
+
+**Status wykonania (2026-06-15):** 6/6 testów zielonych (mock HTTP, bez żywego Frappe — dostępu na razie brak). `KartaKlienta` + enum `TerminWyplaty` w `models.py`; `frappe_client.pobierz_karte` (read-only GET, token auth) z mapowaniem pól i tolerancją formatu proporcji (CSV/lista). Brak karty → `None`; HTTP 5xx/timeout → `FrappeUnavailable`; zepsuty rekord → `FrappeError`. Spec DocType: `docs/frappe-doctype-karta-charakterystyki.md`. Nowa zależność: `requests==2.32.3` (i tak wymagana przez Streamlit w Unit 5).
+
+**Odroczone (wymaga dostępu do Frappe):** test na żywym `/api/resource/Karta Charakterystyki` + faktyczne utworzenie DocType wg specyfikacji. Nie blokuje Units 4–6 (karta z trybu ręcznego / JSON).
 
 - [ ] **Unit 4: Silnik reguł — 5 kontroli**
 
