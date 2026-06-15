@@ -15,17 +15,18 @@ Narzędzie **nie modyfikuje** księgowań — tylko raportuje.
 
 ## Stan projektu
 
-Zrealizowane:
+MVP kompletne:
 
-- **Parser KPiR** (`audytor/parser_kpir.py`) — czyta wydruk szeroki XLSX
-  (nagłówek: podatnik/NIP/okres; rekordy 3-wierszowe; kwoty kolumn 09–18)
-  i waliduje spójność: suma wpisów musi równać się "Sumie miesiąca"
-  z podsumowania wydruku. Rozjazd = błąd krytyczny (`ParserError`).
-- **Wzorce identyfikacji** (`audytor/patterns.py`) — proporcja paliwa,
-  LPU/LPE, DRA, RMK, amortyzacja, `!INCYDENTALNY`.
+- **Parser KPiR** (`audytor/parser_kpir.py`) — wydruk szeroki XLSX z walidacją
+  sum ("Suma miesiąca"); rozjazd = `ParserError`.
+- **Adapter JPK_FA** (`audytor/sources/jpk_fa.py`) — znormalizowana lista faktur.
+- **Karta klienta** (`audytor/frappe_client.py`) — odczyt z Frappe lub tryb ręczny.
+- **Silnik 5 kontroli** (`audytor/rules/`) — `run_audit` (kompletność faktur,
+  lista płac, kasy, paliwo, DRA); statusy OK/OSTRZEŻENIE/BŁĄD/POMINIĘTO.
+- **UI Streamlit** (`app.py`) i **CLI** (`python -m audytor`) — wspólny silnik.
 
-W planie (kolejne etapy): adapter JPK_FA, karta klienta z Frappe,
-silnik 5 kontroli, UI Streamlit, CLI. Szczegóły:
+Odroczone (wymaga dostępu/próbek): test na żywym Frappe, kalibracja
+dopasowania faktur i wzorca raportu z kasy. Szczegóły:
 `2026-06-11-001-feat-audytor-miesieczny-kpir-plan.md`.
 
 ## Uruchomienie środowiska deweloperskiego
@@ -35,6 +36,25 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m pytest tests -q
 ```
+
+## Aplikacja webowa (Streamlit)
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+W aplikacji: wgraj wydruk szeroki KPiR (XLSX), opcjonalnie JPK_FA (XML),
+uzupełnij kartę klienta (NIP, pracownicy, termin wypłaty, liczba kas,
+dozwolone proporcje paliwa) i kliknij **Uruchom audyt**. Wynik to 5 kontroli
+ze statusami (zielony/żółty/czerwony/szary) i przycisk pobrania raportu.
+
+### Wdrożenie na Streamlit Cloud
+
+1. Wypchnij repo na GitHub i połącz ze [Streamlit Cloud](https://share.streamlit.io).
+2. Main file path: `app.py`. Streamlit Cloud sam zainstaluje `requirements.txt`.
+3. Sekrety (gdy podłączysz Frappe) w **Settings → Secrets** w formacie TOML,
+   np. `frappe_url`, `frappe_api_key`, `frappe_api_secret` — odczyt przez
+   `st.secrets`. Bez nich aplikacja działa w trybie ręcznego wprowadzania karty.
 
 ## Uruchomienie audytu z linii poleceń (CLI)
 

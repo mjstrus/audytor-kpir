@@ -196,7 +196,7 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 
 **Status wykonania (2026-06-15):** 22/22 nowych testów zielonych (49/49 łącznie). `run_audit(ksiega, faktury|None, karta) -> AuditResult` w `rules/engine.py` (Status: OK/OSTRZEŻENIE/BŁĄD/POMINIĘTO + `status_zbiorczy`); 5 czystych kontroli w `rules/checks.py`. **Test integracyjny SMAKOSZ potwierdza kryterium sukcesu ze źródła:** paliwo OK (karta {20,75}), DRA = OSTRZEŻENIE (znaleziono 2026/02, oczekiwano 2026/03), lista płac OK (LPU/LPE 2026/03 przy terminie „do 10. następnego"), kasy POMINIĘTO (0 kas), kompletność faktur POMINIĘTO (brak JPK_FA) → status zbiorczy OSTRZEŻENIE. Wpisy `!INCYDENTALNY`/RMK/amortyzacja wyłączone z dopasowania faktur. Kontrola kas na placeholderze regexu (kalibracja odroczona — brak próbki klienta z kasą).
 
-- [ ] **Unit 5: UI Streamlit**
+- [x] **Unit 5: UI Streamlit** ✅ 2026-06-15
 
 **Cel:** Aplikacja na Streamlit Cloud: upload KPiR (+opcjonalnie JPK_FA), pobranie/ręczne podanie karty, czytelny raport (R10).
 
@@ -219,6 +219,8 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 - Zły plik (PDF zamiast XLSX, plik bez nagłówka KPiR) → czytelny komunikat, bez traceback.
 
 **Weryfikacja:** działa na Streamlit Cloud na realnym pliku; księgowa rozumie raport bez instrukcji.
+
+**Status wykonania (2026-06-15):** 5/5 smoke testów zielonych (58/58 łącznie); aplikacja **bootuje się headless** (health endpoint `/_stcore/health` = ok). `app.py` to cienki adapter — logika audytu w `run_audit` (parytet z CLI, R11). Flow: upload XLSX (+ opcjonalny JPK_FA) → formularz karty (tryb ręczny) → audyt → 5 kontroli ze statusami kolorów (success/warning/error/info) + przycisk pobrania raportu Markdown. Testowalne funkcje pomocnicze (`zbuduj_karte`, `audytuj`) bez uruchamiania Streamlit; zły plik → komunikat zamiast traceback. Pobranie karty z Frappe podłączone w warstwie klienta (Unit 3) — w UI tryb ręczny (brak dostępu do Frappe). Wdrożenie Streamlit Cloud opisane w README. Nowa zależność: `streamlit==1.41.1`.
 
 - [x] **Unit 6: Wejście headless (CLI)** ✅ 2026-06-15
 
