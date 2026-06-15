@@ -220,7 +220,7 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 
 **Weryfikacja:** działa na Streamlit Cloud na realnym pliku; księgowa rozumie raport bez instrukcji.
 
-- [ ] **Unit 6: Wejście headless (CLI)**
+- [x] **Unit 6: Wejście headless (CLI)** ✅ 2026-06-15
 
 **Cel:** `python -m audytor <kpir.xlsx> [--jpk-fa plik.xml] [--karta-json plik.json] --out raport.md` — punkt wejścia przyszłego folder-watchera (R11).
 
@@ -239,6 +239,8 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 **Scenariusze testowe:** uruchomienie na fixture → raport.md powstaje, exit code 1 (bo DRA-ostrzeżenie).
 
 **Weryfikacja:** pełny audyt bez Streamlit, jedną komendą.
+
+**Status wykonania (2026-06-15):** 4/4 testy zielone (53/53 łącznie). `python -m audytor <kpir.xlsx> --karta-json k.json [--jpk-fa fa.xml] [--out raport.md]`; exit code 0/1/2 wg `status_zbiorczy`. Wspólny renderer `audytor/report.py` (Markdown — używany też przez Unit 5). **Uruchomiono na żywo na realnym pliku SMAKOSZ** → raport poprawny, exit 1 (ostrzeżenie DRA). Dwie poprawki odporności Windows: karta JSON czytana `utf-8-sig` (toleruje BOM z PowerShell), raport na stdout pisany jako bajty UTF-8 (omija cp1250 bez emoji).
 
 ## Wpływ systemowy
 

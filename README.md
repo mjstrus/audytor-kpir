@@ -36,6 +36,19 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pytest tests -q
 ```
 
+## Uruchomienie audytu z linii poleceń (CLI)
+
+```powershell
+# karta klienta w JSON (gdy brak dostępu do Frappe)
+# pola: nip, zatrudnia_pracownikow, termin_wyplaty
+# ("do_10_nastepnego" | "do_konca_miesiaca"), liczba_kas, proporcje_paliwa
+.\.venv\Scripts\python.exe -m audytor "KPiR - wydruk szeroki.xlsx" `
+    --karta-json karta.json [--jpk-fa faktury.xml] [--out raport.md]
+```
+
+Kod wyjścia: `0` = same OK/POMINIĘTO, `1` = ostrzeżenia, `2` = błędy
+(do rozróżnienia wyniku przez watcher/cron).
+
 ## Architektura
 
 Silnik (`audytor/`) to czysty pakiet Pythona bez zależności od UI —
