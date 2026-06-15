@@ -162,7 +162,7 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 
 **Odroczone (wymaga dostępu do Frappe):** test na żywym `/api/resource/Karta Charakterystyki` + faktyczne utworzenie DocType wg specyfikacji. Nie blokuje Units 4–6 (karta z trybu ręcznego / JSON).
 
-- [ ] **Unit 4: Silnik reguł — 5 kontroli**
+- [x] **Unit 4: Silnik reguł — 5 kontroli** ✅ 2026-06-15
 
 **Cel:** `run_audit(ksiega, faktury|None, karta) -> AuditResult` z wynikami per kontrola (R4–R8, R10-dane).
 
@@ -193,6 +193,8 @@ Brak systemowej kontroli kompletności domknięcia miesiąca klienta KPiR; braki
 - DRA za M-2 → OSTRZEŻENIE; brak DRA → BŁĄD.
 
 **Weryfikacja:** `run_audit` działa bez importów Streamlit/HTTP (czysty silnik, R11); wszystkie scenariusze zielone.
+
+**Status wykonania (2026-06-15):** 22/22 nowych testów zielonych (49/49 łącznie). `run_audit(ksiega, faktury|None, karta) -> AuditResult` w `rules/engine.py` (Status: OK/OSTRZEŻENIE/BŁĄD/POMINIĘTO + `status_zbiorczy`); 5 czystych kontroli w `rules/checks.py`. **Test integracyjny SMAKOSZ potwierdza kryterium sukcesu ze źródła:** paliwo OK (karta {20,75}), DRA = OSTRZEŻENIE (znaleziono 2026/02, oczekiwano 2026/03), lista płac OK (LPU/LPE 2026/03 przy terminie „do 10. następnego"), kasy POMINIĘTO (0 kas), kompletność faktur POMINIĘTO (brak JPK_FA) → status zbiorczy OSTRZEŻENIE. Wpisy `!INCYDENTALNY`/RMK/amortyzacja wyłączone z dopasowania faktur. Kontrola kas na placeholderze regexu (kalibracja odroczona — brak próbki klienta z kasą).
 
 - [ ] **Unit 5: UI Streamlit**
 
