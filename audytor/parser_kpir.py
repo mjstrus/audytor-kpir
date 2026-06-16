@@ -162,7 +162,7 @@ def _zbuduj_wpis(glowny: list, wiersz_2: list, wiersz_3: list, mapa_kolumn: dict
 
 def _czytaj_wiersz_sum(rows: list[list], etykieta: str, mapa_kolumn: dict[int, int]) -> dict[int, Decimal]:
     for row in rows:
-        if _tekst(row[KOL_LP]) == etykieta:
+        if _komorka(row, KOL_LP) == etykieta:
             sumy = {}
             for numer, idx in mapa_kolumn.items():
                 kwota = _kwota(row[idx] if idx < len(row) else None, etykieta)

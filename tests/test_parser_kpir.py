@@ -7,12 +7,12 @@ from pathlib import Path
 import openpyxl
 import pytest
 
-from audytor.parser_kpir import ParserError, parse_kpir
+from audytor.parser_kpir import ParserError, _czytaj_wiersz_sum, parse_kpir
 from audytor.patterns import okres_dra, okres_listy_plac, proporcja_paliwa
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kpir_smakosz_2026_04.xlsx"
 
-pytestmark = pytest.mark.skipif(
+wymaga_fixture = pytest.mark.skipif(
     not FIXTURE.exists(),
     reason="Brak realnego pliku KPiR (dane klienta, poza repo) — umieść go w tests/fixtures/",
 )
@@ -23,6 +23,16 @@ def ksiega():
     return parse_kpir(FIXTURE)
 
 
+class TestOdpornoscNaPusteWiersze:
+    def test_pusty_wiersz_nie_wywala_index_error(self):
+        # openpyxl (read_only) na niektórych wersjach zwraca puste wiersze
+        # jako puste krotki — dostęp do row[0] musi być bezpieczny.
+        rows = [(), ("Suma miesiąca:", "172476.44"), ()]
+        sumy = _czytaj_wiersz_sum(rows, "Suma miesiąca:", {11: 1})
+        assert sumy[11] == Decimal("172476.44")
+
+
+@wymaga_fixture
 class TestParsowanieKsiegi:
     def test_naglowek(self, ksiega):
         assert ksiega.nip_podatnika == "7162519569"
@@ -53,6 +63,7 @@ class TestParsowanieKsiegi:
         assert wpis.nr_ksef == "7791906082-20260401-3BE8CB0000FD-43"
 
 
+@wymaga_fixture
 class TestRozpoznawanieWpisow:
     def test_proporcje_paliwa(self, ksiega):
         proporcje = {proporcja_paliwa(w.opis) for w in ksiega.wpisy if proporcja_paliwa(w.opis)}
@@ -78,6 +89,7 @@ class TestRozpoznawanieWpisow:
         assert korekta.kwota(12) == Decimal("-42.84")
 
 
+@wymaga_fixture
 class TestBledyParsowania:
     def test_zepsuta_kwota_rzuca_parser_error(self, tmp_path):
         workbook = openpyxl.load_workbook(FIXTURE)
