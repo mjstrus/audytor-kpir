@@ -149,6 +149,10 @@ class TestKompletnoscFaktur:
         assert kontrola_kompletnosci_faktur(ksiega, faktury).status is Status.BLAD
 
 
+@pytest.mark.skipif(
+    not FIXTURE_KPIR.exists(),
+    reason="Brak realnego pliku KPiR (dane klienta, poza repo) — umieść go w tests/fixtures/",
+)
 class TestIntegracjaSmakosz:
     @pytest.fixture(scope="class")
     def ksiega(self):

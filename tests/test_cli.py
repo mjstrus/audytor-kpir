@@ -9,6 +9,11 @@ from audytor.__main__ import main
 
 FIXTURE_KPIR = Path(__file__).parent / "fixtures" / "kpir_smakosz_2026_04.xlsx"
 
+pytestmark = pytest.mark.skipif(
+    not FIXTURE_KPIR.exists(),
+    reason="Brak realnego pliku KPiR (dane klienta, poza repo) — umieść go w tests/fixtures/",
+)
+
 KARTA_SMAKOSZ = {
     "nip": "7162519569",
     "zatrudnia_pracownikow": True,

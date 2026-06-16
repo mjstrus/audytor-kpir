@@ -12,12 +12,18 @@ from audytor.sources.jpk_fa import JpkFaError, wczytaj_jpk_fa
 
 FIXTURE = Path(__file__).parent / "fixtures" / "jpk_fa_sample.xml"
 
+wymaga_fixture = pytest.mark.skipif(
+    not FIXTURE.exists(),
+    reason="Brak realnego pliku JPK_FA (dane klienta, poza repo) — umieść go w tests/fixtures/",
+)
+
 
 @pytest.fixture(scope="module")
 def faktury():
     return wczytaj_jpk_fa(FIXTURE)
 
 
+@wymaga_fixture
 class TestWczytywanieJpkFa:
     def test_liczba_faktur(self, faktury):
         assert len(faktury) == 3

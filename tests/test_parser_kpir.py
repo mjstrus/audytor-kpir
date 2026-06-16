@@ -12,6 +12,11 @@ from audytor.patterns import okres_dra, okres_listy_plac, proporcja_paliwa
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kpir_smakosz_2026_04.xlsx"
 
+pytestmark = pytest.mark.skipif(
+    not FIXTURE.exists(),
+    reason="Brak realnego pliku KPiR (dane klienta, poza repo) — umieść go w tests/fixtures/",
+)
+
 
 @pytest.fixture(scope="module")
 def ksiega():

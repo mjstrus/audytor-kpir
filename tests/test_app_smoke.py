@@ -37,6 +37,10 @@ def test_parsuj_proporcje_ignoruje_smieci():
     assert app._parsuj_proporcje("20, 75, abc, ") == {20, 75}
 
 
+@pytest.mark.skipif(
+    not FIXTURE_KPIR.exists(),
+    reason="Brak realnego pliku KPiR (dane klienta, poza repo) — umieść go w tests/fixtures/",
+)
 def test_audytuj_happy_path_smakosz():
     karta = app.zbuduj_karte("7162519569", True, TerminWyplaty.DO_10_NASTEPNEGO, 0, {20, 75})
     with FIXTURE_KPIR.open("rb") as plik:

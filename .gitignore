@@ -2,3 +2,9 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Realne dane klientów (RODO) — trzymane lokalnie, nie w repo.
+# Testy integracyjne pomijają się, gdy tych plików brak.
+tests/fixtures/kpir_smakosz_2026_04.xlsx
+tests/fixtures/jpk_fa_sample.xml
+/KPiR - wydruk szeroki.xlsx
