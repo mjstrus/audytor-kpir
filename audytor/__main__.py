@@ -17,7 +17,7 @@ from audytor.parser_kpir import parse_kpir
 from audytor.report import raport_markdown
 from audytor.rules.engine import AuditResult, Status, run_audit
 from audytor.sources.base import scal_faktury
-from audytor.sources.jpk_fa import wczytaj_jpk_fa
+from audytor.sources.jpk_fa import wczytaj_jpk_fa_z_nip
 
 EXIT_CODE = {Status.OK: 0, Status.POMINIETO: 0, Status.OSTRZEZENIE: 1, Status.BLAD: 2}
 
@@ -26,10 +26,10 @@ def main(argv: list[str] | None = None) -> int:
     args = _parsuj_argumenty(argv)
 
     ksiega = parse_kpir(args.kpir)
-    faktury = _wczytaj_faktury(args.jpk_fa)
+    faktury, nip_zrodel = _wczytaj_faktury(args.jpk_fa)
     karta = _wczytaj_karte_json(args.karta_json)
 
-    wynik = run_audit(ksiega, faktury, karta)
+    wynik = run_audit(ksiega, faktury, karta, nip_zrodel)
     _zapisz_raport(wynik, args.out)
     return EXIT_CODE[wynik.status_zbiorczy]
 
@@ -49,10 +49,12 @@ def _parsuj_argumenty(argv: list[str] | None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _wczytaj_faktury(sciezki: list[Path] | None) -> list[Faktura] | None:
+def _wczytaj_faktury(sciezki: list[Path] | None) -> tuple[list[Faktura] | None, set[str]]:
     if not sciezki:
-        return None
-    return scal_faktury(wczytaj_jpk_fa(sciezka) for sciezka in sciezki)
+        return None, set()
+    pary = [wczytaj_jpk_fa_z_nip(sciezka) for sciezka in sciezki]
+    nip_zrodel = {nip for nip, _ in pary if nip}
+    return scal_faktury(faktury for _, faktury in pary), nip_zrodel
 
 
 def _wczytaj_karte_json(sciezka: Path) -> KartaKlienta:

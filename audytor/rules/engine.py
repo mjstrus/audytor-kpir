@@ -56,13 +56,18 @@ def run_audit(
     ksiega: KsiegaMiesiac,
     faktury: list[Faktura] | None,
     karta: KartaKlienta,
+    nip_zrodel_faktur: set[str] | None = None,
 ) -> AuditResult:
-    """Uruchamia 5 kontroli i składa wynik audytu (R4–R8)."""
+    """Uruchamia 5 kontroli i składa wynik audytu (R4–R8).
+
+    `nip_zrodel_faktur` to NIP-y właścicieli wgranych plików JPK_FA — pozwala
+    ostrzec, gdy plik dotyczy innego podmiotu niż KPiR.
+    """
     # Import lokalny, żeby uniknąć cyklu engine <-> checks.
     from audytor.rules import checks
 
     wyniki = [
-        checks.kontrola_kompletnosci_faktur(ksiega, faktury),
+        checks.kontrola_kompletnosci_faktur(ksiega, faktury, nip_zrodel_faktur),
         checks.kontrola_listy_plac(ksiega, karta),
         checks.kontrola_kas(ksiega, karta),
         checks.kontrola_paliwa(ksiega, karta),

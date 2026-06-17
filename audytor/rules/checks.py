@@ -148,7 +148,11 @@ def _raport_kasy_wpis(wpis: WpisKPiR) -> tuple[int, int, int] | None:
 
 # --- R4: Kompletność faktur ----------------------------------------------
 
-def kontrola_kompletnosci_faktur(ksiega: KsiegaMiesiac, faktury: list[Faktura] | None) -> WynikKontroli:
+def kontrola_kompletnosci_faktur(
+    ksiega: KsiegaMiesiac,
+    faktury: list[Faktura] | None,
+    nip_zrodel: set[str] | None = None,
+) -> WynikKontroli:
     if faktury is None:
         return WynikKontroli(NAZWA_FAKTURY, Status.POMINIETO, ["Nie wgrano pliku JPK_FA"])
 
@@ -164,7 +168,24 @@ def kontrola_kompletnosci_faktur(ksiega: KsiegaMiesiac, faktury: list[Faktura] |
         else:
             brakujace.append(faktura)
 
-    return _zbuduj_wynik_faktur(len(faktury), brakujace, prawdopodobne)
+    wynik = _zbuduj_wynik_faktur(len(faktury), brakujace, prawdopodobne)
+    return _oznacz_obcy_nip(wynik, ksiega, nip_zrodel)
+
+
+def _oznacz_obcy_nip(wynik: WynikKontroli, ksiega: KsiegaMiesiac, nip_zrodel: set[str] | None) -> WynikKontroli:
+    """Dokleja ostrzeżenie, gdy JPK_FA wystawiony na inny NIP niż podatnik z KPiR."""
+    if not nip_zrodel:
+        return wynik
+    obce = sorted(nip for nip in nip_zrodel if nip and nip != ksiega.nip_podatnika)
+    if not obce:
+        return wynik
+
+    nota = (
+        f"UWAGA: JPK_FA wystawiony na NIP {', '.join(obce)}, "
+        f"a księga na {ksiega.nip_podatnika} — prawdopodobnie zły plik"
+    )
+    status = wynik.status if wynik.status is Status.BLAD else Status.OSTRZEZENIE
+    return WynikKontroli(NAZWA_FAKTURY, status, [nota, *wynik.szczegoly], wynik.pozycje)
 
 
 def _zbuduj_wynik_faktur(razem: int, brakujace: list[Faktura], prawdopodobne: list[Faktura]) -> WynikKontroli:

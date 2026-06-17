@@ -192,6 +192,20 @@ class TestKompletnoscFaktur:
         faktury = [Faktura(numer="FV 1/26", data=date(2026, 4, 1), nip_kontrahenta="9", kwota_brutto=Decimal("10"))]
         assert kontrola_kompletnosci_faktur(ksiega, faktury).status is Status.BLAD
 
+    def test_obcy_nip_zrodla_daje_ostrzezenie(self):
+        # plik JPK_FA wystawiony na inny NIP niż podatnik z KPiR
+        ksiega = _ksiega([_wpis(nr_dowodu="FV 1/26")])  # nip podatnika = "1"
+        faktury = [Faktura(numer="FV 1/26", data=date(2026, 4, 1), nip_kontrahenta="9", kwota_brutto=Decimal("10"))]
+        wynik = kontrola_kompletnosci_faktur(ksiega, faktury, nip_zrodel={"9999999999"})
+        assert wynik.status is Status.OSTRZEZENIE
+        assert "prawdopodobnie zły plik" in wynik.szczegoly[0]
+
+    def test_zgodny_nip_zrodla_bez_ostrzezenia(self):
+        ksiega = _ksiega([_wpis(nr_dowodu="FV 1/26")])  # nip podatnika = "1"
+        faktury = [Faktura(numer="FV 1/26", data=date(2026, 4, 1), nip_kontrahenta="9", kwota_brutto=Decimal("10"))]
+        wynik = kontrola_kompletnosci_faktur(ksiega, faktury, nip_zrodel={"1"})
+        assert wynik.status is Status.OK
+
 
 @pytest.mark.skipif(
     not FIXTURE_KPIR.exists(),

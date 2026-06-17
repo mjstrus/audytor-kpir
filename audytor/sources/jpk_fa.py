@@ -31,6 +31,14 @@ class JpkFaError(Exception):
 
 def wczytaj_jpk_fa(plik: str | Path | BinaryIO) -> list[Faktura]:
     """Wczytuje faktury z pliku JPK_FA(4) XML do listy `Faktura`."""
+    return wczytaj_jpk_fa_z_nip(plik)[1]
+
+
+def wczytaj_jpk_fa_z_nip(plik: str | Path | BinaryIO) -> tuple[str | None, list[Faktura]]:
+    """Jak `wczytaj_jpk_fa`, ale zwraca też NIP właściciela pliku (Podmiot1).
+
+    NIP właściciela pozwala wykryć, że wgrano JPK_FA innego podmiotu niż KPiR.
+    """
     try:
         drzewo = ElementTree.parse(plik)
     except ElementTree.ParseError as exc:
@@ -41,7 +49,7 @@ def wczytaj_jpk_fa(plik: str | Path | BinaryIO) -> list[Faktura]:
     faktury = [_zbuduj_fakture(elem, nip_wlasciciela) for elem in _znajdz_wszystkie(root, TAG_FAKTURA)]
     if not faktury:
         raise JpkFaError("Plik JPK_FA nie zawiera żadnej faktury")
-    return faktury
+    return nip_wlasciciela, faktury
 
 
 def _nip_wlasciciela(root: ElementTree.Element) -> str | None:

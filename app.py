@@ -14,7 +14,7 @@ from audytor.parser_kpir import ParserError, parse_kpir
 from audytor.report import IKONY, raport_markdown
 from audytor.rules.engine import AuditResult, Status, run_audit
 from audytor.sources.base import scal_faktury
-from audytor.sources.jpk_fa import JpkFaError, wczytaj_jpk_fa
+from audytor.sources.jpk_fa import JpkFaError, wczytaj_jpk_fa_z_nip
 
 OPIS_TERMINU = {
     "do 10. następnego miesiąca (lista za poprzedni miesiąc)": TerminWyplaty.DO_10_NASTEPNEGO,
@@ -56,10 +56,13 @@ def audytuj(
     bez duplikatów.
     """
     ksiega = parse_kpir(kpir_plik)
-    faktury: list[Faktura] | None = (
-        scal_faktury(wczytaj_jpk_fa(plik) for plik in jpk_fa_pliki) if jpk_fa_pliki else None
-    )
-    return run_audit(ksiega, faktury, karta)
+    if jpk_fa_pliki:
+        pary = [wczytaj_jpk_fa_z_nip(plik) for plik in jpk_fa_pliki]
+        nip_zrodel = {nip for nip, _ in pary if nip}
+        faktury: list[Faktura] | None = scal_faktury(faktury for _, faktury in pary)
+    else:
+        faktury, nip_zrodel = None, set()
+    return run_audit(ksiega, faktury, karta, nip_zrodel)
 
 
 def main() -> None:
