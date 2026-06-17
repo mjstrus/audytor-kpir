@@ -9,10 +9,10 @@ import re
 from audytor.models import Faktura, KartaKlienta, KsiegaMiesiac, TerminWyplaty, WpisKPiR
 from audytor.patterns import (
     AMORTYZACJA_OPIS_RE,
-    RAPORT_KASY_RE,
     RMK_DOWOD_RE,
     okres_dra,
     okres_listy_plac,
+    okres_raportu_kasy,
     proporcja_paliwa,
 )
 from audytor.rules.engine import Status, WynikKontroli
@@ -115,17 +115,27 @@ def kontrola_kas(ksiega: KsiegaMiesiac, karta: KartaKlienta) -> WynikKontroli:
     if karta.liczba_kas == 0:
         return WynikKontroli(NAZWA_KAS, Status.POMINIETO, ["Klient nie ma kas fiskalnych"])
 
-    raporty = [w for w in ksiega.wpisy if RAPORT_KASY_RE.search(w.opis)]
-    znaleziono = len(raporty)
-    if znaleziono >= karta.liczba_kas:
-        return WynikKontroli(NAZWA_KAS, Status.OK, [f"Znaleziono {znaleziono} z {karta.liczba_kas} raportów"], raporty)
+    oczekiwany = (ksiega.rok, ksiega.miesiac)
+    raporty = [(w, okres) for w in ksiega.wpisy if (okres := _okres_raportu_kasy(w))]
+    za_okres = [w for w, okres in raporty if okres == oczekiwany]
 
-    return WynikKontroli(
-        NAZWA_KAS,
-        Status.BLAD,
-        [f"Znaleziono {znaleziono} z {karta.liczba_kas} oczekiwanych raportów z kas"],
-        raporty,
-    )
+    znaleziono = len(za_okres)
+    naglowek = f"Znaleziono {znaleziono} z {karta.liczba_kas} raportów z kas za {_okres(oczekiwany)}"
+    if znaleziono >= karta.liczba_kas:
+        return WynikKontroli(NAZWA_KAS, Status.OK, [naglowek], za_okres)
+
+    szczegoly = [naglowek]
+    inne = {okres for _, okres in raporty if okres != oczekiwany}
+    if inne:
+        szczegoly.append("Raporty za inny okres: " + ", ".join(sorted(_okres(o) for o in inne)))
+    return WynikKontroli(NAZWA_KAS, Status.BLAD, szczegoly, [w for w, _ in raporty])
+
+
+def _okres_raportu_kasy(wpis: WpisKPiR) -> tuple[int, int] | None:
+    for tekst in (wpis.opis, wpis.nr_dowodu):
+        if tekst and (okres := okres_raportu_kasy(tekst)):
+            return okres
+    return None
 
 
 # --- R4: Kompletność faktur ----------------------------------------------

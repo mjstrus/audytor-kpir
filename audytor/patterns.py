@@ -20,9 +20,13 @@ DRA_DOWOD_RE = re.compile(r"^DRA/(\d{4})/(\d{2})")
 RMK_DOWOD_RE = re.compile(r"^RMK/(\d{4})/(\d{2})")
 AMORTYZACJA_OPIS_RE = re.compile(r"^amortyzacja", re.IGNORECASE)
 
-# Raport okresowy z kasy fiskalnej — PLACEHOLDER do kalibracji na próbce
-# klienta z kasą (odroczone w planie; brak wpisów kasowych w próbce SMAKOSZ).
-RAPORT_KASY_RE = re.compile(r"raport\s+(okresowy|miesięczny|fiskalny)", re.IGNORECASE)
+# Raport fiskalny z kasy — konwencja opisu/dowodu w KPiR:
+#   "Raport fiskalny MM/RRRR" lub skrót "Rap. fisk. MM/RRRR" (kropki opcjonalne).
+# Dla wielu kas dopuszczalna doklejona cyfra: "Raport fiskalny2 MM/RRRR".
+RAPORT_KASY_RE = re.compile(
+    r"(?:raport\s+fiskalny|rap\.?\s*fisk\.?)(\d*)\s+(\d{1,2})/(\d{4})",
+    re.IGNORECASE,
+)
 
 # Znacznik wpisu incydentalnego (pojawia się w kolumnie kontrahenta)
 INCYDENTALNY_MARKER = "!INCYDENTALNY"
@@ -48,3 +52,11 @@ def okres_dra(nr_dowodu: str) -> tuple[int, int] | None:
     if not match:
         return None
     return int(match.group(1)), int(match.group(2))
+
+
+def okres_raportu_kasy(tekst: str) -> tuple[int, int] | None:
+    """Zwraca (rok, miesiąc) z opisu/dowodu raportu fiskalnego albo None."""
+    match = RAPORT_KASY_RE.search(tekst)
+    if not match:
+        return None
+    return int(match.group(3)), int(match.group(2))
