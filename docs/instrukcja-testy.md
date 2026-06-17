@@ -13,7 +13,8 @@ generuje fałszywych alarmów.
    kontrolę kompletności faktur. Plik XML z Enovy lub Saldeo.
 3. **Parametry klienta** (z wiedzy o kliencie albo z jego karty):
    - czy zatrudnia pracowników (tak/nie),
-   - termin wypłaty wynagrodzeń (do 10. następnego miesiąca / do końca miesiąca),
+   - termin wypłaty wynagrodzeń (do 10. następnego miesiąca / do końca miesiąca)
+     — pole pojawia się dopiero po zaznaczeniu, że klient zatrudnia pracowników,
    - liczba kas fiskalnych,
    - dozwolone proporcje odliczenia paliwa (np. 20, 75).
 
@@ -21,7 +22,8 @@ generuje fałszywych alarmów.
 
 1. Otwórz adres aplikacji (Streamlit Cloud — link od administratora).
 2. **Wgraj plik KPiR** (XLSX). Jeśli masz — wgraj też **JPK_FA** (XML).
-3. Uzupełnij **kartę klienta** (4 parametry powyżej).
+3. Uzupełnij **kartę klienta** (parametry powyżej; termin wypłaty pojawia się
+   po zaznaczeniu „Zatrudnia pracowników").
 4. Kliknij **Uruchom audyt**.
 5. Odczytaj wynik — 5 kontroli ze statusem:
 
