@@ -131,6 +131,15 @@ class TestKompletnoscFaktur:
         faktury = [Faktura(numer="FV 1/26", data=date(2026, 4, 1), nip_kontrahenta="9", kwota_brutto=Decimal("10"))]
         assert kontrola_kompletnosci_faktur(ksiega, faktury).status is Status.OK
 
+    def test_dopasowanie_mimo_sufiksu_rejestru(self):
+        # KPiR dokleja do nr dowodu sufiks rejestru, np. "(ZR/2026/0092)";
+        # numer z JPK ("(S)FS-1282/26/CGW") musi się i tak dopasować.
+        ksiega = _ksiega([_wpis(nr_dowodu="(S)FS-1282/26/CGW (ZR/2026/0092)")])
+        faktury = [
+            Faktura(numer="(S)FS-1282/26/CGW", data=date(2026, 5, 4), nip_kontrahenta="9", kwota_brutto=Decimal("10"))
+        ]
+        assert kontrola_kompletnosci_faktur(ksiega, faktury).status is Status.OK
+
     def test_faktura_nieobecna_blad(self):
         ksiega = _ksiega([_wpis(nr_dowodu="INNY/1")])
         faktury = [Faktura(numer="FV 99/26", data=date(2026, 4, 5), nip_kontrahenta="9", kwota_brutto=Decimal("10"))]

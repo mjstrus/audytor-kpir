@@ -46,6 +46,33 @@ class TestWczytywanieJpkFa:
         assert kwoty["3/03/2026"] == Decimal("244.77")
 
 
+def _jpk_z_faktura(nip_wlasciciela: str, nip_sprzedawcy: str, nip_nabywcy: str) -> str:
+    return (
+        '<JPK xmlns="http://jpk.mf.gov.pl/wzor/2022/02/17/02171/">'
+        f"<Podmiot1><IdentyfikatorPodmiotu><NIP>{nip_wlasciciela}</NIP>"
+        "</IdentyfikatorPodmiotu></Podmiot1>"
+        "<Faktura><P_1>2026-05-04</P_1><P_2A>FX/1</P_2A>"
+        f"<P_4B>{nip_sprzedawcy}</P_4B><P_5B>{nip_nabywcy}</P_5B>"
+        "<P_15>100.00</P_15></Faktura></JPK>"
+    )
+
+
+class TestOrientacjaKontrahenta:
+    def test_rejestr_zakupu_kontrahent_to_sprzedawca(self, tmp_path):
+        # Właściciel = nabywca (P_5B) → kontrahent to sprzedawca (P_4B).
+        plik = tmp_path / "zakup.xml"
+        plik.write_text(_jpk_z_faktura("1111111111", "2222222222", "1111111111"), encoding="utf-8")
+        faktury = wczytaj_jpk_fa(plik)
+        assert faktury[0].nip_kontrahenta == "2222222222"
+
+    def test_rejestr_sprzedazy_kontrahent_to_nabywca(self, tmp_path):
+        # Właściciel = sprzedawca (P_4B) → kontrahent to nabywca (P_5B).
+        plik = tmp_path / "sprzedaz.xml"
+        plik.write_text(_jpk_z_faktura("1111111111", "1111111111", "3333333333"), encoding="utf-8")
+        faktury = wczytaj_jpk_fa(plik)
+        assert faktury[0].nip_kontrahenta == "3333333333"
+
+
 class TestBledyParsowania:
     def test_pusty_plik_bez_faktur(self, tmp_path):
         pusty = tmp_path / "pusty.xml"

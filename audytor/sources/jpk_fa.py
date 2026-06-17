@@ -16,9 +16,13 @@ from audytor.models import Faktura
 
 POLE_NUMER = "P_2A"
 POLE_DATA = "P_1"
+POLE_NIP_SPRZEDAWCY = "P_4B"
 POLE_NIP_NABYWCY = "P_5B"
 POLE_KWOTA_BRUTTO = "P_15"
 TAG_FAKTURA = "Faktura"
+TAG_PODMIOT1 = "Podmiot1"
+TAG_IDENTYFIKATOR = "IdentyfikatorPodmiotu"
+POLE_NIP = "NIP"
 
 
 class JpkFaError(Exception):
@@ -32,18 +36,42 @@ def wczytaj_jpk_fa(plik: str | Path | BinaryIO) -> list[Faktura]:
     except ElementTree.ParseError as exc:
         raise JpkFaError(f"Nieprawidłowy XML JPK_FA: {exc}") from exc
 
-    faktury = [_zbuduj_fakture(elem) for elem in _znajdz_wszystkie(drzewo.getroot(), TAG_FAKTURA)]
+    root = drzewo.getroot()
+    nip_wlasciciela = _nip_wlasciciela(root)
+    faktury = [_zbuduj_fakture(elem, nip_wlasciciela) for elem in _znajdz_wszystkie(root, TAG_FAKTURA)]
     if not faktury:
         raise JpkFaError("Plik JPK_FA nie zawiera żadnej faktury")
     return faktury
 
 
-def _zbuduj_fakture(elem: ElementTree.Element) -> Faktura:
+def _nip_wlasciciela(root: ElementTree.Element) -> str | None:
+    """NIP podmiotu składającego JPK (Podmiot1) — do rozpoznania, kto jest kontrahentem."""
+    podmiot = _znajdz(root, TAG_PODMIOT1)
+    if podmiot is None:
+        return None
+    identyfikator = _znajdz(podmiot, TAG_IDENTYFIKATOR)
+    return _pole(identyfikator, POLE_NIP) if identyfikator is not None else None
+
+
+def _nip_kontrahenta(elem: ElementTree.Element, nip_wlasciciela: str | None) -> str | None:
+    """Zwraca NIP strony, która NIE jest właścicielem pliku.
+
+    Plik może być rejestrem sprzedaży (kontrahent = nabywca P_5B) lub
+    rejestrem zakupu (kontrahent = sprzedawca P_4B). Bierzemy pierwszą stronę
+    różną od właściciela.
+    """
+    for nip in (_pole(elem, POLE_NIP_SPRZEDAWCY), _pole(elem, POLE_NIP_NABYWCY)):
+        if nip and nip != nip_wlasciciela:
+            return nip
+    return None
+
+
+def _zbuduj_fakture(elem: ElementTree.Element, nip_wlasciciela: str | None) -> Faktura:
     numer = _pole_obowiazkowe(elem, POLE_NUMER)
     return Faktura(
         numer=numer,
         data=_data(elem, numer),
-        nip_kontrahenta=_pole(elem, POLE_NIP_NABYWCY),
+        nip_kontrahenta=_nip_kontrahenta(elem, nip_wlasciciela),
         kwota_brutto=_kwota(elem, numer),
     )
 

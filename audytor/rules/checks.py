@@ -4,6 +4,8 @@ R4 kompletność faktur, R5 lista płac, R6 raporty z kas, R7 proporcje paliwa,
 R8 DRA. Brak danych / kontrola nie dotyczy klienta → POMINIĘTO (nie OK).
 """
 
+import re
+
 from audytor.models import Faktura, KartaKlienta, KsiegaMiesiac, TerminWyplaty, WpisKPiR
 from audytor.patterns import (
     AMORTYZACJA_OPIS_RE,
@@ -15,6 +17,11 @@ from audytor.patterns import (
 )
 from audytor.rules.engine import Status, WynikKontroli
 from audytor.sources.base import normalizuj_numer
+
+# KPiR doklejają do nr dowodu wewnętrzny sufiks rejestru, np. "(ZR/2026/0092)"
+# albo "(SPT/2026/0081)" — usuwamy końcową grupę w nawiasach przed porównaniem
+# (uwaga: zachowujemy ewentualny prefiks typu "(S)" na początku numeru).
+_SUFIKS_REJESTRU_RE = re.compile(r"\s*\([^()]*\)\s*$")
 
 NAZWA_FAKTURY = "Kompletność faktur"
 NAZWA_PLAC = "Lista płac"
@@ -132,7 +139,7 @@ def kontrola_kompletnosci_faktur(ksiega: KsiegaMiesiac, faktury: list[Faktura] |
 
     brakujace, prawdopodobne = [], []
     for faktura in faktury:
-        if normalizuj_numer(faktura.numer) in klucze_numerow:
+        if _klucz_numeru(faktura.numer) in klucze_numerow:
             continue
         if _dopasowanie_heurystyczne(faktura, wpisy):
             prawdopodobne.append(faktura)
@@ -167,8 +174,13 @@ def _klucze_numerow(wpisy: list[WpisKPiR]) -> set[str]:
     for wpis in wpisy:
         for surowy in (wpis.nr_dowodu, wpis.nr_ksef):
             if surowy:
-                klucze.add(normalizuj_numer(surowy))
+                klucze.add(_klucz_numeru(surowy))
     return klucze
+
+
+def _klucz_numeru(numer: str) -> str:
+    """Klucz dopasowania: numer bez końcowego sufiksu rejestru, znormalizowany."""
+    return normalizuj_numer(_SUFIKS_REJESTRU_RE.sub("", numer))
 
 
 def _dopasowanie_heurystyczne(faktura: Faktura, wpisy: list[WpisKPiR]) -> bool:
