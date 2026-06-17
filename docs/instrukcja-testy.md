@@ -34,6 +34,45 @@ generuje fałszywych alarmów.
 
 6. Możesz pobrać raport (przycisk **Pobierz raport**).
 
+## Konwencje opisu dokumentów w KPiR
+
+Żeby audytor poprawnie rozpoznawał dokumenty, kilka wpisów trzeba opisywać wg
+ustalonej zasady. Najważniejszy jest **raport z kasy fiskalnej**.
+
+### Raport fiskalny
+
+W polu **nr dowodu księgowego** wpisuj:
+
+```
+Raport fiskalny NR/MM/RRRR
+```
+
+gdzie **NR = numer kasy**, **MM = miesiąc**, **RRRR = rok**. Przykłady:
+
+- jedna kasa: `Raport fiskalny 1/05/2026`
+- kolejne kasy: `Raport fiskalny 2/05/2026`, `Raport fiskalny 3/05/2026`
+- dozwolony skrót: `Rap. fisk. 2/05/2026`
+
+Zasady:
+
+- **Każda kasa = osobny wpis** z własnym numerem (1, 2, 3…). Dla dwóch kas muszą
+  być dwa raporty: `1/…` i `2/…`. Dwa razy ten sam numer nie zaliczy drugiej kasy.
+- **Miesiąc/rok = miesiąc księgi** (raport za maj w KPiR maja). Inny okres
+  audytor zgłosi jako błąd.
+- Nie ma znaczenia: wielkość liter, nadmiarowe spacje, kropki w skrócie
+  (`RAPORT FISKALNY`, `Rap fisk` — działają tak samo).
+- **Literówki nie są tolerowane** — `raprot fiskalny` nie zostanie rozpoznany.
+  To celowe: zły zapis ma być sygnałem do poprawy.
+
+### Pozostałe wpisy (rozpoznawane automatycznie z Enovy)
+
+Te konwencje wynikają już z eksportu Enovy — nic nie zmieniasz, ale warto
+wiedzieć, na czym opiera się audyt:
+
+- **Paliwo:** opis `zakup paliwa NN` (np. `zakup paliwa 75`) — proporcja wprost.
+- **Lista płac:** opis `LPU`/`LPE`, nr dowodu `LPU/F/RRRR/MM/…`.
+- **DRA (ZUS):** nr dowodu `DRA/RRRR/MM/…`.
+
 ## Co sprawdzić w teście (na co zwrócić uwagę)
 
 - Czy **suma** się zgadza — jeśli plik jest niespójny, narzędzie odmówi audytu
