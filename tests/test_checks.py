@@ -119,6 +119,11 @@ class TestKasy:
         ksiega = _ksiega([_wpis(nr_dowodu="Rap. fisk. 1/04/2026")], miesiac=4)
         assert kontrola_kas(ksiega, _karta(kasy=1)).status is Status.OK
 
+    def test_wielkosc_liter_i_spacje_bez_znaczenia(self):
+        for zapis in ("RAPORT FISKALNY 1/04/2026", "raport   fiskalny 1/04/2026", "RAP FISK 1/04/2026"):
+            ksiega = _ksiega([_wpis(nr_dowodu=zapis)], miesiac=4)
+            assert kontrola_kas(ksiega, _karta(kasy=1)).status is Status.OK, zapis
+
     def test_zapis_bez_numeru_to_kasa_pierwsza(self):
         # zgodność wsteczna: "Raport fiskalny MM/RRRR" = kasa nr 1
         ksiega = _ksiega([_wpis(nr_dowodu="Raport fiskalny 04/2026")], miesiac=4)
