@@ -69,16 +69,21 @@ def main() -> None:
 def _formularz_karty() -> KartaKlienta:
     nip = st.text_input("NIP klienta", help="Uzupełniany automatycznie z pliku, jeśli pusty")
     zatrudnia = st.checkbox("Zatrudnia pracowników")
-    termin_label = st.selectbox("Termin wypłaty wynagrodzeń", list(OPIS_TERMINU))
+    termin_wyplaty = _wybierz_termin_wyplaty() if zatrudnia else TerminWyplaty.DO_10_NASTEPNEGO
     liczba_kas = st.number_input("Liczba kas fiskalnych", min_value=0, step=1, value=0)
     proporcje_tekst = st.text_input("Dozwolone proporcje paliwa (po przecinku)", value="20,75")
     return zbuduj_karte(
         nip=nip.strip(),
         zatrudnia_pracownikow=zatrudnia,
-        termin_wyplaty=OPIS_TERMINU[termin_label],
+        termin_wyplaty=termin_wyplaty,
         liczba_kas=int(liczba_kas),
         proporcje_paliwa=_parsuj_proporcje(proporcje_tekst),
     )
+
+
+def _wybierz_termin_wyplaty() -> TerminWyplaty:
+    """Pole widoczne tylko gdy klient zatrudnia pracowników."""
+    return OPIS_TERMINU[st.selectbox("Termin wypłaty wynagrodzeń", list(OPIS_TERMINU))]
 
 
 def _parsuj_proporcje(tekst: str) -> set[int]:
