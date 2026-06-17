@@ -16,6 +16,7 @@ from audytor.models import Faktura, KartaKlienta, KsiegaMiesiac, TerminWyplaty
 from audytor.parser_kpir import parse_kpir
 from audytor.report import raport_markdown
 from audytor.rules.engine import AuditResult, Status, run_audit
+from audytor.sources.base import scal_faktury
 from audytor.sources.jpk_fa import wczytaj_jpk_fa
 
 EXIT_CODE = {Status.OK: 0, Status.POMINIETO: 0, Status.OSTRZEZENIE: 1, Status.BLAD: 2}
@@ -37,13 +38,21 @@ def _parsuj_argumenty(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="audytor", description="Audyt domknięcia miesiąca KPiR")
     parser.add_argument("kpir", type=Path, help="Plik KPiR (wydruk szeroki XLSX)")
     parser.add_argument("--karta-json", type=Path, required=True, help="Karta klienta w JSON")
-    parser.add_argument("--jpk-fa", type=Path, default=None, help="Plik JPK_FA XML (opcjonalny)")
+    parser.add_argument(
+        "--jpk-fa",
+        type=Path,
+        action="append",
+        default=None,
+        help="Plik JPK_FA XML (opcjonalny; można podać wielokrotnie: sprzedaż i dokumenty)",
+    )
     parser.add_argument("--out", type=Path, default=None, help="Plik raportu .md (domyślnie stdout)")
     return parser.parse_args(argv)
 
 
-def _wczytaj_faktury(sciezka: Path | None) -> list[Faktura] | None:
-    return wczytaj_jpk_fa(sciezka) if sciezka else None
+def _wczytaj_faktury(sciezki: list[Path] | None) -> list[Faktura] | None:
+    if not sciezki:
+        return None
+    return scal_faktury(wczytaj_jpk_fa(sciezka) for sciezka in sciezki)
 
 
 def _wczytaj_karte_json(sciezka: Path) -> KartaKlienta:

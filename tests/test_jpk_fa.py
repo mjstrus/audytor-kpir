@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from audytor.models import Faktura
-from audytor.sources.base import normalizuj_numer
+from audytor.sources.base import normalizuj_numer, scal_faktury
 from audytor.sources.jpk_fa import JpkFaError, wczytaj_jpk_fa
 
 FIXTURE = Path(__file__).parent / "fixtures" / "jpk_fa_sample.xml"
@@ -98,6 +98,28 @@ class TestBledyParsowania:
         zepsuty.write_text("<JPK><Faktura>", encoding="utf-8")
         with pytest.raises(JpkFaError, match="Nieprawidłowy XML"):
             wczytaj_jpk_fa(zepsuty)
+
+
+class TestScalanieFaktur:
+    def _faktura(self, numer, nip="9", kwota="100"):
+        return Faktura(numer=numer, data=date(2026, 5, 1), nip_kontrahenta=nip, kwota_brutto=Decimal(kwota))
+
+    def test_dedup_powtorki_z_dwoch_zbiorow(self):
+        wspolna = self._faktura("FV/1")
+        sprzedaz = [wspolna, self._faktura("FV/2")]
+        dokumenty = [wspolna, self._faktura("FV/3")]  # FV/1 powtórzona, FV/3 tylko tu
+        scalone = scal_faktury([sprzedaz, dokumenty])
+        assert [f.numer for f in scalone] == ["FV/1", "FV/2", "FV/3"]
+
+    def test_ten_sam_numer_inny_kontrahent_nie_jest_duplikatem(self):
+        a = self._faktura("FV/1", nip="111")
+        b = self._faktura("FV/1", nip="222")
+        assert len(scal_faktury([[a], [b]])) == 2
+
+    def test_numer_ze_spacjami_traktowany_jak_ten_sam(self):
+        a = self._faktura("FV 1/26")
+        b = self._faktura("FV  1/26")  # nadmiarowa spacja
+        assert len(scal_faktury([[a], [b]])) == 1
 
 
 class TestNormalizacjaNumeru:

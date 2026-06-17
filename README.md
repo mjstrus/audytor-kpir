@@ -66,6 +66,9 @@ ze statusami (zielony/żółty/czerwony/szary) i przycisk pobrania raportu.
     --karta-json karta.json [--jpk-fa faktury.xml] [--out raport.md]
 ```
 
+`--jpk-fa` można podać **wielokrotnie** (np. zbiór sprzedaż i zbiór dokumenty);
+faktury są scalane bez duplikatów.
+
 Kod wyjścia: `0` = same OK/POMINIĘTO, `1` = ostrzeżenia, `2` = błędy
 (do rozróżnienia wyniku przez watcher/cron).
 

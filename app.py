@@ -13,6 +13,7 @@ from audytor.models import Faktura, KartaKlienta, TerminWyplaty
 from audytor.parser_kpir import ParserError, parse_kpir
 from audytor.report import IKONY, raport_markdown
 from audytor.rules.engine import AuditResult, Status, run_audit
+from audytor.sources.base import scal_faktury
 from audytor.sources.jpk_fa import JpkFaError, wczytaj_jpk_fa
 
 OPIS_TERMINU = {
@@ -44,10 +45,20 @@ def zbuduj_karte(
     )
 
 
-def audytuj(kpir_plik: BinaryIO, jpk_fa_plik: BinaryIO | None, karta: KartaKlienta) -> AuditResult:
-    """Parsuje pliki i uruchamia silnik — wspólna ścieżka z CLI."""
+def audytuj(
+    kpir_plik: BinaryIO,
+    jpk_fa_pliki: list[BinaryIO] | None,
+    karta: KartaKlienta,
+) -> AuditResult:
+    """Parsuje pliki i uruchamia silnik — wspólna ścieżka z CLI.
+
+    `jpk_fa_pliki` to lista (zbiory sprzedaż + dokumenty); faktury są scalane
+    bez duplikatów.
+    """
     ksiega = parse_kpir(kpir_plik)
-    faktury: list[Faktura] | None = wczytaj_jpk_fa(jpk_fa_plik) if jpk_fa_plik else None
+    faktury: list[Faktura] | None = (
+        scal_faktury(wczytaj_jpk_fa(plik) for plik in jpk_fa_pliki) if jpk_fa_pliki else None
+    )
     return run_audit(ksiega, faktury, karta)
 
 
@@ -57,13 +68,17 @@ def main() -> None:
     st.caption("Kontrola domknięcia miesiąca: faktury, lista płac, kasy, paliwo, DRA.")
 
     kpir_plik = st.file_uploader("Wydruk szeroki KPiR (XLSX z Enova)", type=["xlsx"])
-    jpk_fa_plik = st.file_uploader("JPK_FA XML (opcjonalnie — kontrola faktur)", type=["xml"])
+    jpk_fa_pliki = st.file_uploader(
+        "JPK_FA XML (opcjonalnie — kontrola faktur; możesz wgrać kilka: sprzedaż i dokumenty)",
+        type=["xml"],
+        accept_multiple_files=True,
+    )
 
     st.subheader("Karta klienta")
     karta = _formularz_karty()
 
     if st.button("Uruchom audyt", type="primary", disabled=kpir_plik is None):
-        _uruchom_i_pokaz(kpir_plik, jpk_fa_plik, karta)
+        _uruchom_i_pokaz(kpir_plik, jpk_fa_pliki, karta)
 
 
 def _formularz_karty() -> KartaKlienta:
@@ -90,9 +105,9 @@ def _parsuj_proporcje(tekst: str) -> set[int]:
     return {int(x.strip()) for x in tekst.split(",") if x.strip().isdigit()}
 
 
-def _uruchom_i_pokaz(kpir_plik, jpk_fa_plik, karta: KartaKlienta) -> None:
+def _uruchom_i_pokaz(kpir_plik, jpk_fa_pliki, karta: KartaKlienta) -> None:
     try:
-        wynik = audytuj(kpir_plik, jpk_fa_plik, karta)
+        wynik = audytuj(kpir_plik, jpk_fa_pliki, karta)
     except ParserError as exc:
         st.error(f"Nie udało się odczytać pliku KPiR: {exc}")
         return

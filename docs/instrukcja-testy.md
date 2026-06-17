@@ -10,7 +10,9 @@ generuje fałszywych alarmów.
    - W Enova 365 otwórz KPiR klienta → wybierz wydruk **„KPiR — wydruk szeroki"**.
    - Zapisz jako **XLSX** (nie PDF!).
 2. *(opcjonalnie)* **JPK_FA** klienta za **ten sam miesiąc** — żeby przetestować
-   kontrolę kompletności faktur. Plik XML z Enovy lub Saldeo.
+   kontrolę kompletności faktur. Plik XML z Enovy lub Saldeo. Możesz wgrać
+   **kilka** plików naraz (np. zbiór sprzedaż i zbiór dokumenty) — audytor scali
+   faktury bez podwójnego liczenia powtórek.
 3. **Parametry klienta** (z wiedzy o kliencie albo z jego karty):
    - czy zatrudnia pracowników (tak/nie),
    - termin wypłaty wynagrodzeń (do 10. następnego miesiąca / do końca miesiąca)
