@@ -111,29 +111,42 @@ class TestKasy:
     def test_brak_kas_pomijane(self):
         assert kontrola_kas(_ksiega([]), _karta(kasy=0)).status is Status.POMINIETO
 
-    def test_raport_w_nr_dowodu_ok(self):
-        ksiega = _ksiega([_wpis(nr_dowodu="Raport fiskalny 04/2026")], miesiac=4)
+    def test_raport_jedna_kasa_z_numerem_ok(self):
+        ksiega = _ksiega([_wpis(nr_dowodu="Raport fiskalny 1/04/2026")], miesiac=4)
         assert kontrola_kas(ksiega, _karta(kasy=1)).status is Status.OK
 
     def test_skrot_rap_fisk_rozpoznany(self):
-        ksiega = _ksiega([_wpis(nr_dowodu="Rap. fisk. 04/2026")], miesiac=4)
+        ksiega = _ksiega([_wpis(nr_dowodu="Rap. fisk. 1/04/2026")], miesiac=4)
         assert kontrola_kas(ksiega, _karta(kasy=1)).status is Status.OK
 
-    def test_mniej_raportow_niz_kas_blad(self):
+    def test_zapis_bez_numeru_to_kasa_pierwsza(self):
+        # zgodność wsteczna: "Raport fiskalny MM/RRRR" = kasa nr 1
         ksiega = _ksiega([_wpis(nr_dowodu="Raport fiskalny 04/2026")], miesiac=4)
-        wynik = kontrola_kas(ksiega, _karta(kasy=2))
-        assert wynik.status is Status.BLAD
-        assert "1 z 2" in wynik.szczegoly[0]
+        assert kontrola_kas(ksiega, _karta(kasy=1)).status is Status.OK
 
-    def test_dwie_kasy_z_numeracja_ok(self):
+    def test_dwie_kasy_komplet_ok(self):
         ksiega = _ksiega(
-            [_wpis(nr_dowodu="Raport fiskalny 04/2026"), _wpis(nr_dowodu="Raport fiskalny2 04/2026")],
+            [_wpis(nr_dowodu="Raport fiskalny 1/04/2026"), _wpis(nr_dowodu="Raport fiskalny 2/04/2026")],
             miesiac=4,
         )
         assert kontrola_kas(ksiega, _karta(kasy=2)).status is Status.OK
 
+    def test_brak_drugiej_kasy_blad(self):
+        ksiega = _ksiega([_wpis(nr_dowodu="Raport fiskalny 1/04/2026")], miesiac=4)
+        wynik = kontrola_kas(ksiega, _karta(kasy=2))
+        assert wynik.status is Status.BLAD
+        assert "nr: 2" in wynik.szczegoly[0]
+
+    def test_duplikat_numeru_nie_pokrywa_brakujacej_kasy(self):
+        # dwa raporty kasy nr 1, brak kasy nr 2 → BŁĄD
+        ksiega = _ksiega(
+            [_wpis(nr_dowodu="Raport fiskalny 1/04/2026"), _wpis(nr_dowodu="Raport fiskalny 1/04/2026")],
+            miesiac=4,
+        )
+        assert kontrola_kas(ksiega, _karta(kasy=2)).status is Status.BLAD
+
     def test_raport_za_zly_okres_blad(self):
-        ksiega = _ksiega([_wpis(nr_dowodu="Raport fiskalny 03/2026")], miesiac=4)
+        ksiega = _ksiega([_wpis(nr_dowodu="Raport fiskalny 1/03/2026")], miesiac=4)
         wynik = kontrola_kas(ksiega, _karta(kasy=1))
         assert wynik.status is Status.BLAD
         assert any("inny okres" in s for s in wynik.szczegoly)

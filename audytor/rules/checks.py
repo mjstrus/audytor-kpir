@@ -12,8 +12,8 @@ from audytor.patterns import (
     RMK_DOWOD_RE,
     okres_dra,
     okres_listy_plac,
-    okres_raportu_kasy,
     proporcja_paliwa,
+    raport_kasy,
 )
 from audytor.rules.engine import Status, WynikKontroli
 from audytor.sources.base import normalizuj_numer
@@ -116,25 +116,33 @@ def kontrola_kas(ksiega: KsiegaMiesiac, karta: KartaKlienta) -> WynikKontroli:
         return WynikKontroli(NAZWA_KAS, Status.POMINIETO, ["Klient nie ma kas fiskalnych"])
 
     oczekiwany = (ksiega.rok, ksiega.miesiac)
-    raporty = [(w, okres) for w in ksiega.wpisy if (okres := _okres_raportu_kasy(w))]
-    za_okres = [w for w, okres in raporty if okres == oczekiwany]
+    raporty = [(w, dane) for w in ksiega.wpisy if (dane := _raport_kasy_wpis(w))]
+    kasy_za_okres = {numer for _, (numer, rok, mies) in raporty if (rok, mies) == oczekiwany}
+    oczekiwane_kasy = set(range(1, karta.liczba_kas + 1))
+    brakujace = oczekiwane_kasy - kasy_za_okres
 
-    znaleziono = len(za_okres)
-    naglowek = f"Znaleziono {znaleziono} z {karta.liczba_kas} raportów z kas za {_okres(oczekiwany)}"
-    if znaleziono >= karta.liczba_kas:
-        return WynikKontroli(NAZWA_KAS, Status.OK, [naglowek], za_okres)
+    if not brakujace:
+        kasy = ", ".join(map(str, sorted(kasy_za_okres))) or "—"
+        return WynikKontroli(
+            NAZWA_KAS,
+            Status.OK,
+            [f"Raporty kas ({kasy}) za {_okres(oczekiwany)} obecne"],
+            [w for w, _ in raporty],
+        )
 
-    szczegoly = [naglowek]
-    inne = {okres for _, okres in raporty if okres != oczekiwany}
+    szczegoly = [
+        f"Brak raportu kasy nr: {', '.join(map(str, sorted(brakujace)))} za {_okres(oczekiwany)}"
+    ]
+    inne = {(rok, mies) for _, (_numer, rok, mies) in raporty if (rok, mies) != oczekiwany}
     if inne:
         szczegoly.append("Raporty za inny okres: " + ", ".join(sorted(_okres(o) for o in inne)))
     return WynikKontroli(NAZWA_KAS, Status.BLAD, szczegoly, [w for w, _ in raporty])
 
 
-def _okres_raportu_kasy(wpis: WpisKPiR) -> tuple[int, int] | None:
+def _raport_kasy_wpis(wpis: WpisKPiR) -> tuple[int, int, int] | None:
     for tekst in (wpis.opis, wpis.nr_dowodu):
-        if tekst and (okres := okres_raportu_kasy(tekst)):
-            return okres
+        if tekst and (dane := raport_kasy(tekst)):
+            return dane
     return None
 
 

@@ -21,10 +21,11 @@ RMK_DOWOD_RE = re.compile(r"^RMK/(\d{4})/(\d{2})")
 AMORTYZACJA_OPIS_RE = re.compile(r"^amortyzacja", re.IGNORECASE)
 
 # Raport fiskalny z kasy — konwencja opisu/dowodu w KPiR:
-#   "Raport fiskalny MM/RRRR" lub skrót "Rap. fisk. MM/RRRR" (kropki opcjonalne).
-# Dla wielu kas dopuszczalna doklejona cyfra: "Raport fiskalny2 MM/RRRR".
+#   "Raport fiskalny NR/MM/RRRR" (NR = numer kasy), skrót "Rap. fisk. NR/MM/RRRR".
+# Kropki opcjonalne; numer kasy opcjonalny (brak => kasa nr 1) dla zgodności
+# wstecznej z zapisem "Raport fiskalny MM/RRRR".
 RAPORT_KASY_RE = re.compile(
-    r"(?:raport\s+fiskalny|rap\.?\s*fisk\.?)(\d*)\s+(\d{1,2})/(\d{4})",
+    r"(?:raport\s+fiskalny|rap\.?\s*fisk\.?)\s+(?:(\d+)/)?(\d{1,2})/(\d{4})",
     re.IGNORECASE,
 )
 
@@ -54,9 +55,13 @@ def okres_dra(nr_dowodu: str) -> tuple[int, int] | None:
     return int(match.group(1)), int(match.group(2))
 
 
-def okres_raportu_kasy(tekst: str) -> tuple[int, int] | None:
-    """Zwraca (rok, miesiąc) z opisu/dowodu raportu fiskalnego albo None."""
+def raport_kasy(tekst: str) -> tuple[int, int, int] | None:
+    """Zwraca (numer_kasy, rok, miesiąc) z raportu fiskalnego albo None.
+
+    Numer kasy domyślnie 1, gdy nie podano (zapis "Raport fiskalny MM/RRRR").
+    """
     match = RAPORT_KASY_RE.search(tekst)
     if not match:
         return None
-    return int(match.group(3)), int(match.group(2))
+    numer = int(match.group(1)) if match.group(1) else 1
+    return numer, int(match.group(3)), int(match.group(2))
