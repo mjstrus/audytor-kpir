@@ -26,6 +26,8 @@ KOL_OPIS = 4
 DATA_RE = re.compile(r"^\d{2}\.\d{2}\.\d{4}$")
 ETYKIETA_KOLUMNY_RE = re.compile(r"^\((\d{2})\)$")
 OKRES_RE = re.compile(r"Za\s+(\S+)\s+(\d{4})")
+# Etykieta "NIP" + 10 cyfr; tolerancja wielkości liter, spacji i braku dwukropka.
+NIP_RE = re.compile(r"NIP\s*:?\s*(\d{10})", re.IGNORECASE)
 SUMA_MIESIACA_LABEL = "Suma miesiąca:"
 NARASTAJACO_LABEL = "Razem od początku roku:"
 
@@ -72,13 +74,14 @@ def _czytaj_naglowek(rows: list[list]) -> tuple[str, str, int, int]:
 
     nip = None
     rok, miesiac = None, None
-    for row in rows[:20]:
+    for row in rows[:25]:
         for cell in row:
             tekst = _tekst(cell)
             if not tekst:
                 continue
-            if nip is None and tekst.startswith("NIP:"):
-                nip = tekst.removeprefix("NIP:").strip()
+            if nip is None and (dopasowanie := NIP_RE.search(tekst)):
+                # Pierwszy NIP w nagłówku to podatnik (NIP biura jest niżej).
+                nip = dopasowanie.group(1)
             if rok is None:
                 match = OKRES_RE.search(tekst)
                 if match and match.group(1).lower() in MIESIACE:

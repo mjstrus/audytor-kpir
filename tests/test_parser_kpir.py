@@ -7,7 +7,7 @@ from pathlib import Path
 import openpyxl
 import pytest
 
-from audytor.parser_kpir import ParserError, _czytaj_wiersz_sum, parse_kpir
+from audytor.parser_kpir import ParserError, _czytaj_naglowek, _czytaj_wiersz_sum, parse_kpir
 from audytor.patterns import okres_dra, okres_listy_plac, proporcja_paliwa
 
 FIXTURE = Path(__file__).parent / "fixtures" / "kpir_smakosz_2026_04.xlsx"
@@ -30,6 +30,23 @@ class TestOdpornoscNaPusteWiersze:
         rows = [(), ("Suma miesiąca:", "172476.44"), ()]
         sumy = _czytaj_wiersz_sum(rows, "Suma miesiąca:", {11: 1})
         assert sumy[11] == Decimal("172476.44")
+
+
+class TestNaglowekNip:
+    @pytest.mark.parametrize(
+        "zapis_nip",
+        ["NIP: 7162755554", "NIP : 7162755554", "nip 7162755554", " NIP:7162755554", "NIP:\xa07162755554"],
+    )
+    def test_rozne_formaty_nip(self, zapis_nip):
+        rows = [["KLIK PIZZA"], ["Za maj 2026"], [zapis_nip]]
+        nazwa, nip, rok, miesiac = _czytaj_naglowek(rows)
+        assert nip == "7162755554"
+        assert (rok, miesiac) == (2026, 5)
+
+    def test_pierwszy_nip_to_podatnik_nie_biuro(self):
+        rows = [["KLIK PIZZA"], ["Za maj 2026"], ["NIP: 7162755554"], ["NIP: 7162819366"]]
+        _, nip, _, _ = _czytaj_naglowek(rows)
+        assert nip == "7162755554"
 
 
 @wymaga_fixture
